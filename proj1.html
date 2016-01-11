@@ -1,0 +1,324 @@
+<html>
+
+<head>
+<style type="text/css">
+.knitr .inline {
+  background-color: #f7f7f7;
+  border:solid 1px #B0B0B0;
+}
+.error {
+	font-weight: bold;
+	color: #FF0000;
+}
+.warning {
+	font-weight: bold;
+}
+.message {
+	font-style: italic;
+}
+.source, .output, .warning, .error, .message {
+	padding: 0 1em;
+  border:solid 1px #F7F7F7;
+}
+.source {
+  background-color: #f5f5f5;
+}
+.rimage .left {
+  text-align: left;
+}
+.rimage .right {
+  text-align: right;
+}
+.rimage .center {
+  text-align: center;
+}
+.hl.num {
+  color: #AF0F91;
+}
+.hl.str {
+  color: #317ECC;
+}
+.hl.com {
+  color: #AD95AF;
+  font-style: italic;
+}
+.hl.opt {
+  color: #000000;
+}
+.hl.std {
+  color: #585858;
+}
+.hl.kwa {
+  color: #295F94;
+  font-weight: bold;
+}
+.hl.kwb {
+  color: #B05A65;
+}
+.hl.kwc {
+  color: #55aa55;
+}
+.hl.kwd {
+  color: #BC5A65;
+  font-weight: bold;
+}
+</style>
+<title>Pratical machine learning project write-up</title>
+</head>
+
+<body>
+
+<h1>Introduction</h1>
+
+<p>Background(provided by Coursera website): Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. </p>
+
+<p>The goal of this project is to predict the "classe" variable in the training set. The organization of this report include: data preprocessing section, model training section, and finally a conclusion section.</p>
+
+<div class="chunk" id="unnamed-chunk-1"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">pmltrain</span> <span class="hl kwb">=</span> <span class="hl kwd">read.csv</span><span class="hl std">(</span><span class="hl str">&quot;pml-training.csv&quot;</span><span class="hl std">,</span> <span class="hl kwc">na.strings</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;NA&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;#DIV/0!&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;&quot;</span><span class="hl std">));</span>
+<span class="hl std">pmltest</span> <span class="hl kwb">=</span> <span class="hl kwd">read.csv</span><span class="hl std">(</span><span class="hl str">&quot;pml-testing.csv&quot;</span><span class="hl std">,</span> <span class="hl kwc">na.strings</span> <span class="hl std">=</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl str">&quot;NA&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;#DIV/0!&quot;</span><span class="hl std">,</span> <span class="hl str">&quot;&quot;</span><span class="hl std">));</span>
+<span class="hl kwd">colnames</span><span class="hl std">(pmltrain)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">##   [1] &quot;X&quot;                        &quot;user_name&quot;               
+##   [3] &quot;raw_timestamp_part_1&quot;     &quot;raw_timestamp_part_2&quot;    
+##   [5] &quot;cvtd_timestamp&quot;           &quot;new_window&quot;              
+##   [7] &quot;num_window&quot;               &quot;roll_belt&quot;               
+##   [9] &quot;pitch_belt&quot;               &quot;yaw_belt&quot;                
+##  [11] &quot;total_accel_belt&quot;         &quot;kurtosis_roll_belt&quot;      
+##  [13] &quot;kurtosis_picth_belt&quot;      &quot;kurtosis_yaw_belt&quot;       
+##  [15] &quot;skewness_roll_belt&quot;       &quot;skewness_roll_belt.1&quot;    
+##  [17] &quot;skewness_yaw_belt&quot;        &quot;max_roll_belt&quot;           
+##  [19] &quot;max_picth_belt&quot;           &quot;max_yaw_belt&quot;            
+##  [21] &quot;min_roll_belt&quot;            &quot;min_pitch_belt&quot;          
+##  [23] &quot;min_yaw_belt&quot;             &quot;amplitude_roll_belt&quot;     
+##  [25] &quot;amplitude_pitch_belt&quot;     &quot;amplitude_yaw_belt&quot;      
+##  [27] &quot;var_total_accel_belt&quot;     &quot;avg_roll_belt&quot;           
+##  [29] &quot;stddev_roll_belt&quot;         &quot;var_roll_belt&quot;           
+##  [31] &quot;avg_pitch_belt&quot;           &quot;stddev_pitch_belt&quot;       
+##  [33] &quot;var_pitch_belt&quot;           &quot;avg_yaw_belt&quot;            
+##  [35] &quot;stddev_yaw_belt&quot;          &quot;var_yaw_belt&quot;            
+##  [37] &quot;gyros_belt_x&quot;             &quot;gyros_belt_y&quot;            
+##  [39] &quot;gyros_belt_z&quot;             &quot;accel_belt_x&quot;            
+##  [41] &quot;accel_belt_y&quot;             &quot;accel_belt_z&quot;            
+##  [43] &quot;magnet_belt_x&quot;            &quot;magnet_belt_y&quot;           
+##  [45] &quot;magnet_belt_z&quot;            &quot;roll_arm&quot;                
+##  [47] &quot;pitch_arm&quot;                &quot;yaw_arm&quot;                 
+##  [49] &quot;total_accel_arm&quot;          &quot;var_accel_arm&quot;           
+##  [51] &quot;avg_roll_arm&quot;             &quot;stddev_roll_arm&quot;         
+##  [53] &quot;var_roll_arm&quot;             &quot;avg_pitch_arm&quot;           
+##  [55] &quot;stddev_pitch_arm&quot;         &quot;var_pitch_arm&quot;           
+##  [57] &quot;avg_yaw_arm&quot;              &quot;stddev_yaw_arm&quot;          
+##  [59] &quot;var_yaw_arm&quot;              &quot;gyros_arm_x&quot;             
+##  [61] &quot;gyros_arm_y&quot;              &quot;gyros_arm_z&quot;             
+##  [63] &quot;accel_arm_x&quot;              &quot;accel_arm_y&quot;             
+##  [65] &quot;accel_arm_z&quot;              &quot;magnet_arm_x&quot;            
+##  [67] &quot;magnet_arm_y&quot;             &quot;magnet_arm_z&quot;            
+##  [69] &quot;kurtosis_roll_arm&quot;        &quot;kurtosis_picth_arm&quot;      
+##  [71] &quot;kurtosis_yaw_arm&quot;         &quot;skewness_roll_arm&quot;       
+##  [73] &quot;skewness_pitch_arm&quot;       &quot;skewness_yaw_arm&quot;        
+##  [75] &quot;max_roll_arm&quot;             &quot;max_picth_arm&quot;           
+##  [77] &quot;max_yaw_arm&quot;              &quot;min_roll_arm&quot;            
+##  [79] &quot;min_pitch_arm&quot;            &quot;min_yaw_arm&quot;             
+##  [81] &quot;amplitude_roll_arm&quot;       &quot;amplitude_pitch_arm&quot;     
+##  [83] &quot;amplitude_yaw_arm&quot;        &quot;roll_dumbbell&quot;           
+##  [85] &quot;pitch_dumbbell&quot;           &quot;yaw_dumbbell&quot;            
+##  [87] &quot;kurtosis_roll_dumbbell&quot;   &quot;kurtosis_picth_dumbbell&quot; 
+##  [89] &quot;kurtosis_yaw_dumbbell&quot;    &quot;skewness_roll_dumbbell&quot;  
+##  [91] &quot;skewness_pitch_dumbbell&quot;  &quot;skewness_yaw_dumbbell&quot;   
+##  [93] &quot;max_roll_dumbbell&quot;        &quot;max_picth_dumbbell&quot;      
+##  [95] &quot;max_yaw_dumbbell&quot;         &quot;min_roll_dumbbell&quot;       
+##  [97] &quot;min_pitch_dumbbell&quot;       &quot;min_yaw_dumbbell&quot;        
+##  [99] &quot;amplitude_roll_dumbbell&quot;  &quot;amplitude_pitch_dumbbell&quot;
+## [101] &quot;amplitude_yaw_dumbbell&quot;   &quot;total_accel_dumbbell&quot;    
+## [103] &quot;var_accel_dumbbell&quot;       &quot;avg_roll_dumbbell&quot;       
+## [105] &quot;stddev_roll_dumbbell&quot;     &quot;var_roll_dumbbell&quot;       
+## [107] &quot;avg_pitch_dumbbell&quot;       &quot;stddev_pitch_dumbbell&quot;   
+## [109] &quot;var_pitch_dumbbell&quot;       &quot;avg_yaw_dumbbell&quot;        
+## [111] &quot;stddev_yaw_dumbbell&quot;      &quot;var_yaw_dumbbell&quot;        
+## [113] &quot;gyros_dumbbell_x&quot;         &quot;gyros_dumbbell_y&quot;        
+## [115] &quot;gyros_dumbbell_z&quot;         &quot;accel_dumbbell_x&quot;        
+## [117] &quot;accel_dumbbell_y&quot;         &quot;accel_dumbbell_z&quot;        
+## [119] &quot;magnet_dumbbell_x&quot;        &quot;magnet_dumbbell_y&quot;       
+## [121] &quot;magnet_dumbbell_z&quot;        &quot;roll_forearm&quot;            
+## [123] &quot;pitch_forearm&quot;            &quot;yaw_forearm&quot;             
+## [125] &quot;kurtosis_roll_forearm&quot;    &quot;kurtosis_picth_forearm&quot;  
+## [127] &quot;kurtosis_yaw_forearm&quot;     &quot;skewness_roll_forearm&quot;   
+## [129] &quot;skewness_pitch_forearm&quot;   &quot;skewness_yaw_forearm&quot;    
+## [131] &quot;max_roll_forearm&quot;         &quot;max_picth_forearm&quot;       
+## [133] &quot;max_yaw_forearm&quot;          &quot;min_roll_forearm&quot;        
+## [135] &quot;min_pitch_forearm&quot;        &quot;min_yaw_forearm&quot;         
+## [137] &quot;amplitude_roll_forearm&quot;   &quot;amplitude_pitch_forearm&quot; 
+## [139] &quot;amplitude_yaw_forearm&quot;    &quot;total_accel_forearm&quot;     
+## [141] &quot;var_accel_forearm&quot;        &quot;avg_roll_forearm&quot;        
+## [143] &quot;stddev_roll_forearm&quot;      &quot;var_roll_forearm&quot;        
+## [145] &quot;avg_pitch_forearm&quot;        &quot;stddev_pitch_forearm&quot;    
+## [147] &quot;var_pitch_forearm&quot;        &quot;avg_yaw_forearm&quot;         
+## [149] &quot;stddev_yaw_forearm&quot;       &quot;var_yaw_forearm&quot;         
+## [151] &quot;gyros_forearm_x&quot;          &quot;gyros_forearm_y&quot;         
+## [153] &quot;gyros_forearm_z&quot;          &quot;accel_forearm_x&quot;         
+## [155] &quot;accel_forearm_y&quot;          &quot;accel_forearm_z&quot;         
+## [157] &quot;magnet_forearm_x&quot;         &quot;magnet_forearm_y&quot;        
+## [159] &quot;magnet_forearm_z&quot;         &quot;classe&quot;
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">levels</span><span class="hl std">(pmltrain</span><span class="hl opt">$</span><span class="hl std">classe)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] &quot;A&quot; &quot;B&quot; &quot;C&quot; &quot;D&quot; &quot;E&quot;
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">str</span><span class="hl std">(pmltrain,</span> <span class="hl kwc">list.len</span> <span class="hl std">=</span> <span class="hl num">15</span><span class="hl std">)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## 'data.frame':	19622 obs. of  160 variables:
+##  $ X                       : int  1 2 3 4 5 6 7 8 9 10 ...
+##  $ user_name               : Factor w/ 6 levels &quot;adelmo&quot;,&quot;carlitos&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ raw_timestamp_part_1    : int  1323084231 1323084231 1323084231 1323084232 1323084232 1323084232 1323084232 1323084232 1323084232 1323084232 ...
+##  $ raw_timestamp_part_2    : int  788290 808298 820366 120339 196328 304277 368296 440390 484323 484434 ...
+##  $ cvtd_timestamp          : Factor w/ 20 levels &quot;02/12/2011 13:32&quot;,..: 9 9 9 9 9 9 9 9 9 9 ...
+##  $ new_window              : Factor w/ 2 levels &quot;no&quot;,&quot;yes&quot;: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ num_window              : int  11 11 11 12 12 12 12 12 12 12 ...
+##  $ roll_belt               : num  1.41 1.41 1.42 1.48 1.48 1.45 1.42 1.42 1.43 1.45 ...
+##  $ pitch_belt              : num  8.07 8.07 8.07 8.05 8.07 8.06 8.09 8.13 8.16 8.17 ...
+##  $ yaw_belt                : num  -94.4 -94.4 -94.4 -94.4 -94.4 -94.4 -94.4 -94.4 -94.4 -94.4 ...
+##  $ total_accel_belt        : int  3 3 3 3 3 3 3 3 3 3 ...
+##  $ kurtosis_roll_belt      : num  NA NA NA NA NA NA NA NA NA NA ...
+##  $ kurtosis_picth_belt     : num  NA NA NA NA NA NA NA NA NA NA ...
+##  $ kurtosis_yaw_belt       : logi  NA NA NA NA NA NA ...
+##  $ skewness_roll_belt      : num  NA NA NA NA NA NA NA NA NA NA ...
+##   [list output truncated]
+</pre></div>
+</div></div>
+
+<h1>Data Preprocessing</h1>
+
+<p>First, do some data cleaning to clean obviously unnecessary columns 1 to 6, since those cannot be used as prediction. Second, we should also handle missing values, replace missing values or simply delete a column if there are too many missing values in that column. In my implementation, if there a column has more than half of the values are missing, then I will remove that column. Third, I will remove columns with very low variance. Fourth, I will remove columns which have collinearity with other columns. To achieve this, I wrote a rmcollinearity.R script taking correlation matrix as input to remove collinearity columns. Last, we need to do data partition to divide the training data to train set and validation set.</p>
+
+<p>Below is the code for the function which can eliminate collinearity. This elimination only based on correlation. The threshold for correlation is 0.75.</p>
+
+<div class="chunk" id="unnamed-chunk-2"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl com">##this function requires input a correlation matrix and a target variable</span>
+<span class="hl com">##it returns the indexes of columns to remove</span>
+<span class="hl std">rmcollinearity</span> <span class="hl kwb">=</span> <span class="hl kwa">function</span><span class="hl std">(</span><span class="hl kwc">cormat</span><span class="hl std">){</span>
+  <span class="hl std">row</span> <span class="hl kwb">=</span> <span class="hl kwd">dim</span><span class="hl std">(cormat)[</span><span class="hl num">1</span><span class="hl std">];</span>
+  <span class="hl std">col</span> <span class="hl kwb">=</span> <span class="hl kwd">dim</span><span class="hl std">(cormat)[</span><span class="hl num">2</span><span class="hl std">];</span>
+  <span class="hl com">#print(col)</span>
+  <span class="hl std">rmcol</span> <span class="hl kwb">=</span> <span class="hl kwd">c</span><span class="hl std">();</span>
+  <span class="hl kwa">for</span><span class="hl std">(i</span> <span class="hl kwa">in</span> <span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl opt">:</span><span class="hl std">(row</span><span class="hl opt">-</span><span class="hl num">1</span><span class="hl std">))){</span>
+    <span class="hl kwa">for</span><span class="hl std">(j</span> <span class="hl kwa">in</span> <span class="hl kwd">c</span><span class="hl std">((i</span><span class="hl opt">+</span><span class="hl num">1</span><span class="hl std">)</span><span class="hl opt">:</span><span class="hl std">col)){</span>
+      <span class="hl kwa">if</span><span class="hl std">(cormat[i,j]</span><span class="hl opt">&gt;=</span><span class="hl num">0.75</span><span class="hl std">){</span>
+        <span class="hl kwa">if</span><span class="hl std">(</span><span class="hl opt">!</span><span class="hl std">(j</span> <span class="hl opt">%in%</span> <span class="hl std">rmcol))</span>
+           <span class="hl std">{rmcol</span> <span class="hl kwb">=</span> <span class="hl kwd">c</span><span class="hl std">(rmcol, j);}</span>
+      <span class="hl std">}</span>
+    <span class="hl std">}</span>
+  <span class="hl std">}</span>
+  <span class="hl std">rmcol</span>
+<span class="hl std">}</span>
+</pre></div>
+</div></div>
+
+<div class="chunk" id="unnamed-chunk-3"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">pmltrain</span> <span class="hl kwb">=</span> <span class="hl std">pmltrain[,</span> <span class="hl opt">-</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl opt">:</span><span class="hl num">6</span><span class="hl std">)];</span>
+<span class="hl std">pmltest</span> <span class="hl kwb">=</span> <span class="hl std">pmltest[,</span><span class="hl opt">-</span><span class="hl kwd">c</span><span class="hl std">(</span><span class="hl num">1</span><span class="hl opt">:</span><span class="hl num">6</span><span class="hl std">)];</span>
+<span class="hl std">not.na.col</span> <span class="hl kwb">=</span> <span class="hl kwd">apply</span><span class="hl std">(</span><span class="hl opt">!</span><span class="hl kwd">is.na</span><span class="hl std">(pmltrain),</span> <span class="hl num">2</span><span class="hl std">, sum)</span> <span class="hl opt">&gt;</span> <span class="hl num">0.5</span><span class="hl opt">*</span><span class="hl kwd">nrow</span><span class="hl std">(pmltrain);</span>
+<span class="hl std">pmltrain</span> <span class="hl kwb">=</span> <span class="hl std">pmltrain[,not.na.col];</span>
+<span class="hl std">pmltest</span> <span class="hl kwb">=</span> <span class="hl std">pmltest[,not.na.col];</span>
+
+<span class="hl std">cormat</span> <span class="hl kwb">=</span> <span class="hl kwd">cor</span><span class="hl std">(pmltrain[,</span><span class="hl opt">-</span><span class="hl num">54</span><span class="hl std">])</span>
+<span class="hl kwd">dim</span><span class="hl std">(cormat)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 53 53
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">rmcol</span> <span class="hl kwb">=</span> <span class="hl kwd">rmcollinearity</span><span class="hl std">(cormat);</span>
+
+<span class="hl std">pmltrain</span> <span class="hl kwb">=</span> <span class="hl std">pmltrain[,</span><span class="hl opt">-</span><span class="hl std">rmcol];</span>
+<span class="hl std">pmltest</span> <span class="hl kwb">=</span> <span class="hl std">pmltest[,</span><span class="hl opt">-</span><span class="hl std">rmcol];</span>
+<span class="hl com">## data partition</span>
+<span class="hl kwd">library</span><span class="hl std">(caret)</span>
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning: package 'caret' was built under R version 3.2.2
+</pre></div>
+<div class="message"><pre class="knitr r">## Loading required package: lattice
+## Loading required package: ggplot2
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning: package 'ggplot2' was built under R version 3.2.2
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl kwd">set.seed</span><span class="hl std">(</span><span class="hl num">1111</span><span class="hl std">)</span>
+<span class="hl std">inTrain</span> <span class="hl kwb">=</span> <span class="hl kwd">createDataPartition</span><span class="hl std">(</span><span class="hl kwc">y</span><span class="hl std">=pmltrain</span><span class="hl opt">$</span><span class="hl std">classe,</span> <span class="hl kwc">p</span><span class="hl std">=</span><span class="hl num">0.60</span><span class="hl std">,</span> <span class="hl kwc">list</span><span class="hl std">=</span><span class="hl num">FALSE</span><span class="hl std">)</span>
+<span class="hl std">train</span>  <span class="hl kwb">=</span> <span class="hl std">pmltrain[inTrain,]</span>
+<span class="hl std">valid</span>  <span class="hl kwb">=</span> <span class="hl std">pmltrain[</span><span class="hl opt">-</span><span class="hl std">inTrain,]</span>
+</pre></div>
+</div></div>
+
+<h1>Model training</h1>
+
+<p>I directly choose an ensemble method to do the prediction, which can have very good performance in doing classification from experiences. You can see below the importance figure plotted by using random forests model. And you can see the accuracy is very good. </p>
+
+<div class="chunk" id="unnamed-chunk-4"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">library</span><span class="hl std">(randomForest)</span>
+</pre></div>
+<div class="warning"><pre class="knitr r">## Warning: package 'randomForest' was built under R version 3.2.2
+</pre></div>
+<div class="message"><pre class="knitr r">## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.
+</pre></div>
+<div class="source"><pre class="knitr r"><span class="hl std">rfmodel</span> <span class="hl kwb">=</span> <span class="hl kwd">randomForest</span><span class="hl std">(classe</span><span class="hl opt">~</span><span class="hl std">.,</span> <span class="hl kwc">data</span><span class="hl std">=train,</span> <span class="hl kwc">importance</span><span class="hl std">=</span><span class="hl num">TRUE</span><span class="hl std">,</span> <span class="hl kwc">ntree</span><span class="hl std">=</span><span class="hl num">100</span><span class="hl std">)</span>
+<span class="hl std">predictions</span> <span class="hl kwb">=</span> <span class="hl kwd">predict</span><span class="hl std">(rfmodel,</span> <span class="hl kwc">newdata</span><span class="hl std">=valid)</span>
+<span class="hl std">confusionMat</span> <span class="hl kwb">=</span> <span class="hl kwd">confusionMatrix</span><span class="hl std">(predictions, valid</span><span class="hl opt">$</span><span class="hl std">classe)</span>
+<span class="hl std">confusionMat</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 2231    0    0    0    0
+##          B    1 1515    6    0    0
+##          C    0    3 1362   14    0
+##          D    0    0    0 1272    2
+##          E    0    0    0    0 1440
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9967          
+##                  95% CI : (0.9951, 0.9978)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9958          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9996   0.9980   0.9956   0.9891   0.9986
+## Specificity            1.0000   0.9989   0.9974   0.9997   1.0000
+## Pos Pred Value         1.0000   0.9954   0.9877   0.9984   1.0000
+## Neg Pred Value         0.9998   0.9995   0.9991   0.9979   0.9997
+## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+## Detection Rate         0.2843   0.1931   0.1736   0.1621   0.1835
+## Detection Prevalence   0.2843   0.1940   0.1758   0.1624   0.1835
+## Balanced Accuracy      0.9998   0.9985   0.9965   0.9944   0.9993
+</pre></div>
+</div></div>
+
+<p>Variable Importance showed by random forests</p>
+
+<div class="chunk" id="unnamed-chunk-5"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">varImpPlot</span><span class="hl std">(rfmodel)</span>
+</pre></div>
+</div><div class="rimage default"><img src="figure/unnamed-chunk-5-1.png" title="plot of chunk unnamed-chunk-5" alt="plot of chunk unnamed-chunk-5" class="plot" /></div></div>
+
+<p>Out-of-sample error rate of random forests model</p>
+
+<p>The out of sample error rate is as below. It is about 0.38%, which is a very good prediction result.</p>
+
+<div class="chunk" id="unnamed-chunk-6"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl kwd">sum</span><span class="hl std">(predictions</span><span class="hl opt">!=</span><span class="hl std">valid</span><span class="hl opt">$</span><span class="hl std">classe)</span><span class="hl opt">/</span><span class="hl kwd">length</span><span class="hl std">(predictions)</span>
+</pre></div>
+<div class="output"><pre class="knitr r">## [1] 0.00331379
+</pre></div>
+</div></div>
+
+<h1>Submission</h1>
+
+<p>Now, we want to use the fitted model to do prediction on the test set provided by coursera.</p>
+
+<div class="chunk" id="unnamed-chunk-7"><div class="rcode"><div class="source"><pre class="knitr r"><span class="hl std">test.predictions</span> <span class="hl kwb">=</span> <span class="hl kwd">predict</span><span class="hl std">(rfmodel,</span> <span class="hl kwc">newdata</span> <span class="hl std">= pmltest);</span>
+<span class="hl std">pmltest</span><span class="hl opt">$</span><span class="hl std">classe</span> <span class="hl kwb">=</span> <span class="hl std">test.predictions;</span>
+<span class="hl std">submit</span> <span class="hl kwb">=</span> <span class="hl kwd">data.frame</span><span class="hl std">(</span><span class="hl kwc">problem_id</span> <span class="hl std">= pmltest</span><span class="hl opt">$</span><span class="hl std">problem_id,</span> <span class="hl kwc">classe</span> <span class="hl std">= test.predictions);</span>
+<span class="hl kwd">write.csv</span><span class="hl std">(submit,</span> <span class="hl kwc">file</span> <span class="hl std">=</span> <span class="hl str">&quot;pmlproj-submission.csv&quot;</span><span class="hl std">,</span> <span class="hl kwc">row.names</span> <span class="hl std">=</span> <span class="hl num">FALSE</span><span class="hl std">);</span>
+</pre></div>
+</div></div>
+
+</body>
+</html>
