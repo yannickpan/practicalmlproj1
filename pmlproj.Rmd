@@ -1,0 +1,107 @@
+---
+title: "Pratical machine learning project write-up"
+author: "Yangchen Pan"
+date: "Monday, January 11, 2016"
+output: html_document
+---
+
+# Introduction
+
+Background(provided by Coursera website): Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. 
+
+The goal of this project is to predict the "classe" variable in the training set. The organization of this report include: data preprocessing section, model training section, and finally a conclusion section.
+
+```{r}
+pmltrain = read.csv("pml-training.csv", na.strings = c("NA", "#DIV/0!", ""));
+pmltest = read.csv("pml-testing.csv", na.strings = c("NA", "#DIV/0!", ""));
+colnames(pmltrain)
+levels(pmltrain$classe)
+str(pmltrain, list.len = 15)
+```
+
+# Data Preprocessing
+
+First, do some data cleaning to clean obviously unnecessary columns 1 to 6, since those cannot be used as prediction. Second, we should also handle missing values, replace missing values or simply delete a column if there are too many missing values in that column. In my implementation, if there a column has more than half of the values are missing, then I will remove that column. Third, I will remove columns with very low variance. Fourth, I will remove columns which have collinearity with other columns. To achieve this, I wrote a rmcollinearity.R script taking correlation matrix as input to remove collinearity columns. Last, we need to do data partition to divide the training data to train set and validation set.
+
+Below is the code for the function which can eliminate collinearity. This elimination only based on correlation. The threshold for correlation is 0.75.
+
+```{r}
+##this function requires input a correlation matrix and a target variable
+##it returns the indexes of columns to remove
+rmcollinearity = function(cormat){
+  row = dim(cormat)[1];
+  col = dim(cormat)[2];
+  #print(col)
+  rmcol = c();
+  for(i in c(1:(row-1))){
+    for(j in c((i+1):col)){
+      if(cormat[i,j]>=0.75){
+        if(!(j %in% rmcol))
+           {rmcol = c(rmcol, j);}
+      }
+    }
+  }
+  rmcol
+}
+```
+
+
+```{r}
+pmltrain = pmltrain[, -c(1:6)];
+pmltest = pmltest[,-c(1:6)];
+not.na.col = apply(!is.na(pmltrain), 2, sum) > 0.5*nrow(pmltrain);
+pmltrain = pmltrain[,not.na.col];
+pmltest = pmltest[,not.na.col];
+
+cormat = cor(pmltrain[,-54])
+dim(cormat)
+rmcol = rmcollinearity(cormat);
+
+pmltrain = pmltrain[,-rmcol];
+pmltest = pmltest[,-rmcol];
+## data partition
+library(caret)
+set.seed(1111)
+inTrain = createDataPartition(y=pmltrain$classe, p=0.60, list=FALSE)
+train  = pmltrain[inTrain,]
+valid  = pmltrain[-inTrain,]
+```
+
+# Model training
+
+I directly choose an ensemble method to do the prediction, which can have very good performance in doing classification from experiences. You can see below the importance figure plotted by using random forests model. And you can see the accuracy is very good.
+
+```{r}
+library(randomForest)
+rfmodel = randomForest(classe~., data=train, importance=TRUE, ntree=100)
+predictions = predict(rfmodel, newdata=valid)
+confusionMat = confusionMatrix(predictions, valid$classe)
+confusionMat
+```
+
+## Variable Importance showed by random forests
+
+```{r}
+varImpPlot(rfmodel)
+```
+
+## Out-of-sample error rate of random forests model
+
+The out of sample error rate is as below. It is about 0.38%, which is a very good prediction result.
+
+```{r}
+sum(predictions!=valid$classe)/length(predictions)
+```
+
+# Submission
+
+Now, we want to use the fitted model to do prediction on the test set provided by coursera.
+
+```{r}
+test.predictions = predict(rfmodel, newdata = pmltest);
+pmltest$classe = test.predictions;
+submit = data.frame(problem_id = pmltest$problem_id, classe = test.predictions);
+write.csv(submit, file = "pmlproj-submission.csv", row.names = FALSE);
+pmltest$classe
+```
+
